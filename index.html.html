@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de Plano — CresciMente</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #5C2D8F;
+    --purple-mid: #7B3FB5;
+    --purple-light: #F3EEF9;
+    --gold: #C9A84C;
+    --dark: #1A1A2E;
+    --gray: #F6F5F8;
+    --text: #2D2D3A;
+    --muted: #888898;
+    --white: #ffffff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--dark);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #1A1A2E 0%, #2D1B4E 50%, #1A1A2E 100%);
+    padding: 40px 40px 32px;
+    border-bottom: 1px solid rgba(92,45,143,0.4);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .header-icon {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, var(--purple), var(--purple-mid));
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .header-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; color: var(--white); font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .header-text p {
+    font-size: 13px; color: rgba(255,255,255,0.5);
+    margin-top: 2px; font-weight: 300;
+  }
+
+  /* MAIN LAYOUT */
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    min-height: calc(100vh - 100px);
+  }
+
+  /* FORM SIDE */
+  .form-side {
+    background: var(--white);
+    padding: 40px 48px;
+    overflow-y: auto;
+  }
+
+  .progress-bar {
+    display: flex; gap: 6px; margin-bottom: 36px;
+  }
+  .progress-step {
+    height: 4px; flex: 1; border-radius: 2px;
+    background: #E5E0F0;
+    transition: background 0.3s;
+  }
+  .progress-step.active { background: var(--purple); }
+  .progress-step.done { background: var(--gold); }
+
+  .block {
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+  .block.visible { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .block-header {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 28px;
+  }
+  .block-num {
+    width: 36px; height: 36px;
+    background: var(--purple);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-weight: 700; color: var(--white);
+    flex-shrink: 0;
+  }
+  .block-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; font-weight: 700; color: var(--purple);
+  }
+  .block-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .field-group { margin-bottom: 20px; }
+  .field-group label {
+    display: block;
+    font-size: 13px; font-weight: 600; color: var(--text);
+    margin-bottom: 7px; letter-spacing: 0.01em;
+  }
+  .field-group .hint {
+    font-size: 11px; color: var(--muted);
+    margin-bottom: 7px; margin-top: -4px;
+    font-style: italic;
+  }
+  .field-group input,
+  .field-group textarea,
+  .field-group select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #E5E0F0;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--gray);
+    transition: border-color 0.2s, background 0.2s;
+    outline: none;
+    resize: none;
+  }
+  .field-group input:focus,
+  .field-group textarea:focus,
+  .field-group select:focus {
+    border-color: var(--purple);
+    background: var(--white);
+  }
+  .field-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  }
+
+  .nav-btns {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 32px; padding-top: 24px;
+    border-top: 1px solid #F0EBF8;
+  }
+  .btn-back {
+    padding: 10px 22px;
+    border: 1.5px solid var(--purple);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--purple);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-back:hover { background: var(--purple-light); }
+  .btn-next {
+    padding: 12px 28px;
+    background: var(--purple);
+    border: none; border-radius: 10px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-next:hover { background: var(--purple-mid); transform: translateY(-1px); }
+  .btn-generate {
+    padding: 14px 32px;
+    background: linear-gradient(135deg, var(--gold), #E5BE6A);
+    border: none; border-radius: 10px;
+    color: #2A1800;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,168,76,0.35); }
+
+  .block-counter {
+    font-size: 12px; color: var(--muted); font-weight: 500;
+  }
+
+  /* PREVIEW SIDE */
+  .preview-side {
+    background: linear-gradient(160deg, #1A1A2E, #2D1B4E);
+    padding: 40px 32px;
+    overflow-y: auto;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+
+  .preview-header {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .preview-header h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px; color: rgba(255,255,255,0.5);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    font-weight: 400;
+  }
+  .preview-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; color: var(--white);
+    font-weight: 700; margin-top: 4px;
+    min-height: 30px;
+  }
+  .preview-biz {
+    font-size: 13px; color: var(--gold);
+    margin-top: 4px; font-weight: 500;
+  }
+
+  .preview-section {
+    margin-bottom: 20px;
+  }
+  .preview-section-title {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .preview-item {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .preview-item-label {
+    font-size: 10px; color: rgba(255,255,255,0.4);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+  .preview-item-value {
+    font-size: 13px; color: rgba(255,255,255,0.85);
+    line-height: 1.5;
+    min-height: 18px;
+  }
+  .preview-empty {
+    color: rgba(255,255,255,0.2) !important;
+    font-style: italic;
+  }
+
+  .preview-3l {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+    margin-top: 8px;
+  }
+  .l-card {
+    background: rgba(92,45,143,0.3);
+    border: 1px solid rgba(92,45,143,0.5);
+    border-radius: 10px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+  .l-card-icon { font-size: 18px; margin-bottom: 4px; }
+  .l-card-label {
+    font-size: 10px; color: rgba(255,255,255,0.6);
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+  }
+
+  /* RESULTADO */
+  #resultado {
+    display: none;
+    background: var(--white);
+    padding: 48px;
+    max-width: 860px;
+    margin: 0 auto;
+    border-radius: 20px;
+  }
+  #resultado.show { display: block; }
+
+  /* FULL SCREEN RESULT */
+  .result-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(10,10,20,0.95);
+    z-index: 100;
+    overflow-y: auto;
+    padding: 40px 20px;
+  }
+  .result-overlay.show { display: flex; flex-direction: column; align-items: center; }
+
+  .result-card {
+    background: var(--white);
+    width: 100%;
+    max-width: 820px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+  }
+
+  .result-cover {
+    background: linear-gradient(135deg, var(--purple), var(--purple-mid));
+    padding: 48px 48px 40px;
+    color: var(--white);
+  }
+  .result-cover-tag {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 12px;
+  }
+  .result-cover-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px; font-weight: 900;
+    line-height: 1.1; margin-bottom: 8px;
+  }
+  .result-cover-biz {
+    font-size: 14px; color: rgba(255,255,255,0.7);
+    margin-bottom: 20px;
+  }
+  .result-cover-3l {
+    display: flex; gap: 12px;
+  }
+  .result-pill {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 12px; font-weight: 600;
+  }
+
+  .result-body { padding: 40px 48px; }
+
+  .result-section { margin-bottom: 32px; }
+  .result-section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-weight: 700;
+    color: var(--purple);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--purple-light);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .result-section-num {
+    width: 26px; height: 26px;
+    background: var(--purple);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: var(--white);
+    flex-shrink: 0;
+  }
+
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .result-item {
+    background: var(--gray);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .result-item-label {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted); margin-bottom: 4px;
+  }
+  .result-item-value {
+    font-size: 14px; color: var(--text);
+    line-height: 1.5; font-weight: 400;
+  }
+  .result-item.full { grid-column: 1 / -1; }
+  .result-item.highlight {
+    background: var(--purple-light);
+    border: 1px solid rgba(92,45,143,0.2);
+  }
+  .result-item.highlight .result-item-value {
+    color: var(--purple); font-weight: 600;
+  }
+
+  .result-3l { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .result-l {
+    background: linear-gradient(135deg, var(--purple), var(--purple-mid));
+    border-radius: 12px; padding: 20px 16px; text-align: center; color: var(--white);
+  }
+  .result-l-icon { font-size: 24px; margin-bottom: 8px; }
+  .result-l-name { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .result-l-desc { font-size: 12px; opacity: 0.75; line-height: 1.4; }
+
+  .result-note {
+    background: linear-gradient(135deg, var(--purple-light), #EDE5F8);
+    border-left: 4px solid var(--purple);
+    border-radius: 0 12px 12px 0;
+    padding: 16px 20px;
+    margin-top: 20px;
+    font-size: 13px; color: var(--purple);
+    font-style: italic; line-height: 1.6;
+  }
+
+  .result-footer {
+    background: var(--dark);
+    padding: 24px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .result-footer-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px; color: rgba(255,255,255,0.6);
+  }
+  .result-footer-method {
+    font-size: 12px; color: var(--gold);
+    letter-spacing: 0.05em;
+  }
+
+  .result-actions {
+    display: flex; gap: 12px; margin-top: 24px; justify-content: center;
+  }
+  .btn-print {
+    padding: 13px 28px;
+    background: var(--purple);
+    border: none; border-radius: 10px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-print:hover { background: var(--purple-mid); }
+  .btn-close-result {
+    padding: 13px 24px;
+    background: transparent;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    color: rgba(255,255,255,0.7);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-close-result:hover { border-color: rgba(255,255,255,0.5); color: var(--white); }
+
+  @media print {
+    body { background: white; }
+    .header, .main { display: none !important; }
+    .result-overlay { position: static; background: white; padding: 0; display: block !important; }
+    .result-actions { display: none !important; }
+    .result-card { box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">✦</div>
+  <div class="header-text">
+    <h1>Plano de Ação 3 Meses</h1>
+    <p>CresciMente Negócios · Sessão Estratégica</p>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- FORMULÁRIO -->
+  <div class="form-side">
+    <div class="progress-bar">
+      <div class="progress-step active" id="step-0"></div>
+      <div class="progress-step" id="step-1"></div>
+      <div class="progress-step" id="step-2"></div>
+      <div class="progress-step" id="step-3"></div>
+    </div>
+
+    <!-- BLOCO 0 — IDENTIFICAÇÃO -->
+    <div class="block visible" id="block-0">
+      <div class="block-header">
+        <div class="block-num">✦</div>
+        <div>
+          <div class="block-title">Identificação da Empresária</div>
+          <div class="block-sub">Dados básicos para personalizar o plano</div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>Nome completo</label>
+          <input type="text" id="nome" placeholder="Ex: Ana Paula Ferreira" oninput="updatePreview()">
+        </div>
+        <div class="field-group">
+          <label>Data da sessão</label>
+          <input type="date" id="data_sessao">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>Nome do negócio</label>
+          <input type="text" id="negocio" placeholder="Ex: Estúdio Arte & Flor" oninput="updatePreview()">
+        </div>
+        <div class="field-group">
+          <label>Segmento</label>
+          <input type="text" id="segmento" placeholder="Ex: Estética, Alimentação, Moda..." oninput="updatePreview()">
+        </div>
+      </div>
+      <div class="nav-btns">
+        <span class="block-counter">Bloco 1 de 4</span>
+        <button class="btn-next" onclick="goTo(1)">Próximo ›</button>
+      </div>
+    </div>
+
+    <!-- BLOCO 1 — O NEGÓCIO -->
+    <div class="block" id="block-1">
+      <div class="block-header">
+        <div class="block-num">1</div>
+        <div>
+          <div class="block-title">O Negócio</div>
+          <div class="block-sub">Situação atual da empresa</div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Há quanto tempo existe?</label>
+        <input type="text" id="tempo" placeholder="Ex: 4 anos" oninput="updatePreview()">
+      </div>
+      <div class="field-group">
+        <label>Produto ou serviço principal</label>
+        <textarea id="produto" rows="2" placeholder="Descreva o que ela vende e como entrega..." oninput="updatePreview()"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>Equipe atual</label>
+          <input type="text" id="equipe" placeholder="Ex: Sozinha, 2 funcionários..." oninput="updatePreview()">
+        </div>
+        <div class="field-group">
+          <label>Faturamento médio mensal</label>
+          <input type="text" id="faturamento" placeholder="Ex: R$ 8.000 a R$ 12.000" oninput="updatePreview()">
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Principais custos fixos</label>
+        <input type="text" id="custos" placeholder="Ex: Aluguel, funcionários, fornecedores..." oninput="updatePreview()">
+      </div>
+      <div class="nav-btns">
+        <button class="btn-back" onclick="goTo(0)">‹ Voltar</button>
+        <span class="block-counter">Bloco 2 de 4</span>
+        <button class="btn-next" onclick="goTo(2)">Próximo ›</button>
+      </div>
+    </div>
+
+    <!-- BLOCO 2 — O PROBLEMA -->
+    <div class="block" id="block-2">
+      <div class="block-header">
+        <div class="block-num">2</div>
+        <div>
+          <div class="block-title">O Problema</div>
+          <div class="block-sub">O que trava o crescimento hoje</div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Principal travamento do negócio</label>
+        <div class="hint">O que ela disse que mais a paralisa?</div>
+        <textarea id="travamento" rows="2" placeholder="Ex: Tudo depende dela, sem processos definidos..." oninput="updatePreview()"></textarea>
+      </div>
+      <div class="field-group">
+        <label>Tarefas que só ela faz</label>
+        <input type="text" id="tarefas" placeholder="Ex: Atendimento, financeiro, compras..." oninput="updatePreview()">
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>Horas trabalhadas por semana</label>
+          <input type="text" id="horas" placeholder="Ex: 60 horas" oninput="updatePreview()">
+        </div>
+        <div class="field-group">
+          <label>Nível de cansaço (1–10)</label>
+          <select id="cansaco" onchange="updatePreview()">
+            <option value="">Selecione...</option>
+            <option>1 — Tranquila</option>
+            <option>2</option><option>3</option><option>4</option>
+            <option>5 — Equilibrada</option>
+            <option>6</option><option>7</option><option>8</option>
+            <option>9</option>
+            <option>10 — Esgotada</option>
+          </select>
+        </div>
+      </div>
+      <div class="nav-btns">
+        <button class="btn-back" onclick="goTo(1)">‹ Voltar</button>
+        <span class="block-counter">Bloco 3 de 4</span>
+        <button class="btn-next" onclick="goTo(3)">Próximo ›</button>
+      </div>
+    </div>
+
+    <!-- BLOCO 3 — FOCO 3 MESES -->
+    <div class="block" id="block-3">
+      <div class="block-header">
+        <div class="block-num">3</div>
+        <div>
+          <div class="block-title">Os Próximos 3 Meses</div>
+          <div class="block-sub">Foco, metas e primeiros movimentos</div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Qual é o resultado mais importante nos próximos 3 meses?</label>
+        <div class="hint">Uma coisa só. O que, se acontecer, muda o jogo?</div>
+        <textarea id="objetivo" rows="2" placeholder="Ex: Ter uma equipe de 2 pessoas treinada para atendimento..." oninput="updatePreview()"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>Meta de faturamento — mês 1</label>
+          <input type="text" id="meta_m1" placeholder="Ex: R$ 10.000" oninput="updatePreview()">
+        </div>
+        <div class="field-group">
+          <label>Meta de faturamento — mês 3</label>
+          <input type="text" id="meta_m3" placeholder="Ex: R$ 15.000" oninput="updatePreview()">
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Qual a primeira coisa que precisa ser resolvida? (mês 1)</label>
+        <div class="hint">O maior problema agora. Vendas, time, financeiro, processo?</div>
+        <input type="text" id="prioridade1" placeholder="Ex: Estruturar o processo de vendas" oninput="updatePreview()">
+      </div>
+      <div class="field-group">
+        <label>O que deve estar funcionando sem ela ao final do mês 3?</label>
+        <input type="text" id="independencia" placeholder="Ex: Atendimento ao cliente, postagens no Instagram..." oninput="updatePreview()">
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>Ticket médio atual</label>
+          <input type="text" id="ticket" placeholder="Ex: R$ 350" oninput="updatePreview()">
+        </div>
+        <div class="field-group">
+          <label>Clientes ativos hoje</label>
+          <input type="text" id="clientes" placeholder="Ex: 40 clientes/mês" oninput="updatePreview()">
+        </div>
+      </div>
+      <div class="field-group">
+        <label>O que ela está disposta a mudar agora para chegar lá?</label>
+        <div class="hint">Comprometimento real. O que ela disse que vai fazer diferente?</div>
+        <textarea id="visao" rows="2" placeholder="Ex: Delegar o atendimento, parar de aceitar tudo, organizar as finanças..." oninput="updatePreview()"></textarea>
+      </div>
+      <div class="nav-btns">
+        <button class="btn-back" onclick="goTo(2)">‹ Voltar</button>
+        <span></span>
+        <button class="btn-generate" onclick="gerarPlano()">✦ Gerar Plano 3 Meses</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="preview-side">
+    <div class="preview-header">
+      <h3>Pré-visualização</h3>
+      <div class="preview-name" id="prev-nome">—</div>
+      <div class="preview-biz" id="prev-biz">Preencha os dados ao lado</div>
+    </div>
+
+    <div class="preview-section">
+      <div class="preview-section-title">Método 3L — Foco da Mentoria</div>
+      <div class="preview-3l">
+        <div class="l-card"><div class="l-card-icon">💰</div><div class="l-card-label">Lucro</div></div>
+        <div class="l-card"><div class="l-card-icon">👑</div><div class="l-card-label">Liderança</div></div>
+        <div class="l-card"><div class="l-card-icon">🕊</div><div class="l-card-label">Liberdade</div></div>
+      </div>
+    </div>
+
+    <div class="preview-section">
+      <div class="preview-section-title">Situação Atual</div>
+      <div class="preview-item">
+        <div class="preview-item-label">Negócio</div>
+        <div class="preview-item-value preview-empty" id="prev-negocio">—</div>
+      </div>
+      <div class="preview-item">
+        <div class="preview-item-label">Faturamento atual</div>
+        <div class="preview-item-value preview-empty" id="prev-faturamento">—</div>
+      </div>
+      <div class="preview-item">
+        <div class="preview-item-label">Principal dor</div>
+        <div class="preview-item-value preview-empty" id="prev-dor">—</div>
+      </div>
+    </div>
+
+    <div class="preview-section">
+      <div class="preview-section-title">Destino</div>
+      <div class="preview-item">
+        <div class="preview-item-label">Meta mês 1</div>
+        <div class="preview-item-value preview-empty" id="prev-meta12">—</div>
+      </div>
+      <div class="preview-item">
+        <div class="preview-item-label">Prioridade agora</div>
+        <div class="preview-item-value preview-empty" id="prev-objetivo">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTADO FINAL -->
+<div class="result-overlay" id="result-overlay">
+  <div class="result-card" id="result-card">
+    <!-- conteúdo gerado via JS -->
+  </div>
+  <div class="result-actions">
+    <button class="btn-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+    <button class="btn-close-result" onclick="document.getElementById('result-overlay').classList.remove('show')">← Voltar ao Formulário</button>
+  </div>
+</div>
+
+<script>
+let currentBlock = 0;
+
+function goTo(n) {
+  document.getElementById(`block-${currentBlock}`).classList.remove('visible');
+  document.getElementById(`step-${currentBlock}`).classList.remove('active');
+  document.getElementById(`step-${currentBlock}`).classList.add('done');
+  currentBlock = n;
+  document.getElementById(`block-${n}`).classList.add('visible');
+  document.getElementById(`step-${n}`).classList.add('active');
+  updatePreview();
+}
+
+function val(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+function updatePreview() {
+  const nome = val('nome');
+  const negocio = val('negocio');
+  const seg = val('segmento');
+
+  const prevNome = document.getElementById('prev-nome');
+  const prevBiz = document.getElementById('prev-biz');
+  prevNome.textContent = nome || '—';
+  prevBiz.textContent = (negocio || seg) ? `${negocio}${seg ? ' · ' + seg : ''}` : 'Preencha os dados ao lado';
+
+  setPreview('prev-negocio', negocio + (seg ? ` (${seg})` : ''));
+  setPreview('prev-faturamento', val('faturamento'));
+  setPreview('prev-dor', val('travamento'));
+  setPreview('prev-meta12', val('meta_m1'));
+  setPreview('prev-objetivo', val('prioridade1'));
+}
+
+function setPreview(id, v) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (v) {
+    el.textContent = v.length > 60 ? v.substring(0, 60) + '…' : v;
+    el.classList.remove('preview-empty');
+  } else {
+    el.textContent = '—';
+    el.classList.add('preview-empty');
+  }
+}
+
+function gerarPlano() {
+  const d = {
+    nome: val('nome') || 'Empresária',
+    data: val('data_sessao') ? new Date(val('data_sessao') + 'T12:00:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'),
+    negocio: val('negocio') || '—',
+    segmento: val('segmento') || '—',
+    tempo: val('tempo') || '—',
+    produto: val('produto') || '—',
+    equipe: val('equipe') || '—',
+    faturamento: val('faturamento') || '—',
+    custos: val('custos') || '—',
+    travamento: val('travamento') || '—',
+    tarefas: val('tarefas') || '—',
+    horas: val('horas') || '—',
+    cansaco: val('cansaco') || '—',
+    objetivo: val('objetivo') || '—',
+    meta_m1: val('meta_m1') || '—',
+    meta_m3: val('meta_m3') || '—',
+    prioridade1: val('prioridade1') || '—',
+    independencia: val('independencia') || '—',
+    ticket: val('ticket') || '—',
+    clientes: val('clientes') || '—',
+    visao: val('visao') || '—',
+  };
+
+  const nome1 = d.nome.split(' ')[0];
+
+  document.getElementById('result-card').innerHTML = `
+    <div class="result-cover">
+      <div class="result-cover-tag">CresciMente Negócios · Sessão Estratégica · ${d.data}</div>
+      <div class="result-cover-name">Plano de Ação — 3 Meses<br>${nome1}</div>
+      <div class="result-cover-biz">${d.negocio} · ${d.segmento}</div>
+      <div class="result-cover-3l">
+        <div class="result-pill">💰 Lucro</div>
+        <div class="result-pill">👑 Liderança</div>
+        <div class="result-pill">🕊 Liberdade</div>
+      </div>
+    </div>
+
+    <div class="result-body">
+
+      <div class="result-section">
+        <div class="result-section-title"><div class="result-section-num">1</div>Diagnóstico — Onde Você Está Hoje</div>
+        <div class="result-grid">
+          <div class="result-item"><div class="result-item-label">Negócio</div><div class="result-item-value">${d.negocio} · ${d.segmento}</div></div>
+          <div class="result-item"><div class="result-item-label">Tempo de mercado</div><div class="result-item-value">${d.tempo}</div></div>
+          <div class="result-item highlight"><div class="result-item-label">Faturamento atual</div><div class="result-item-value">${d.faturamento}</div></div>
+          <div class="result-item"><div class="result-item-label">Equipe</div><div class="result-item-value">${d.equipe}</div></div>
+          <div class="result-item"><div class="result-item-label">Ticket médio</div><div class="result-item-value">${d.ticket}</div></div>
+          <div class="result-item"><div class="result-item-label">Clientes ativos</div><div class="result-item-value">${d.clientes}</div></div>
+          <div class="result-item full highlight"><div class="result-item-label">Principal travamento</div><div class="result-item-value">${d.travamento}</div></div>
+          <div class="result-item"><div class="result-item-label">Tarefas que só você faz</div><div class="result-item-value">${d.tarefas}</div></div>
+          <div class="result-item"><div class="result-item-label">Horas/semana trabalhadas</div><div class="result-item-value">${d.horas}</div></div>
+        </div>
+        <div class="result-note">
+          📌 <strong>Diagnóstico:</strong> Seu negócio já funciona — mas ainda depende de você para quase tudo. Nos próximos 3 meses, o foco é criar a estrutura mínima que começa a mudar essa realidade.
+        </div>
+      </div>
+
+      <div class="result-section">
+        <div class="result-section-title"><div class="result-section-num">2</div>O Resultado dos 3 Meses</div>
+        <div class="result-grid">
+          <div class="result-item full highlight"><div class="result-item-label">Resultado principal esperado</div><div class="result-item-value">${d.objetivo}</div></div>
+          <div class="result-item"><div class="result-item-label">Meta de faturamento — Mês 1</div><div class="result-item-value">${d.meta_m1}</div></div>
+          <div class="result-item"><div class="result-item-label">Meta de faturamento — Mês 3</div><div class="result-item-value">${d.meta_m3}</div></div>
+          <div class="result-item full"><div class="result-item-label">O que precisa funcionar sem você ao final do mês 3</div><div class="result-item-value">${d.independencia}</div></div>
+        </div>
+      </div>
+
+      <div class="result-section">
+        <div class="result-section-title"><div class="result-section-num">3</div>Plano Mês a Mês</div>
+
+        <div style="margin-bottom:16px;">
+          <div style="background:var(--purple);color:white;border-radius:10px 10px 0 0;padding:10px 16px;font-weight:700;font-size:13px;">📅 MÊS 1 — Organizar a Base</div>
+          <div class="result-item full" style="border-radius:0 0 10px 10px;margin-top:0;">
+            <div class="result-item-label">Prioridade</div>
+            <div class="result-item-value">${d.prioridade1}</div>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid #E5E0F0;">
+              <div class="result-item-label">Foco do mês</div>
+              <div class="result-item-value">Mapear e organizar o que existe. Entender os números reais. Identificar onde o dinheiro some. Definir quais tarefas podem sair das suas mãos primeiro.</div>
+            </div>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid #E5E0F0;">
+              <div class="result-item-label">Meta financeira</div>
+              <div class="result-item-value" style="color:var(--purple);font-weight:600;">${d.meta_m1}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <div style="background:#7B3FB5;color:white;border-radius:10px 10px 0 0;padding:10px 16px;font-weight:700;font-size:13px;">📅 MÊS 2 — Executar e Ajustar</div>
+          <div class="result-item full" style="border-radius:0 0 10px 10px;margin-top:0;">
+            <div class="result-item-label">Foco do mês</div>
+            <div class="result-item-value">Colocar em prática as mudanças definidas no mês 1. Iniciar delegação. Criar ou ajustar o processo de vendas. Começar a separar o operacional do estratégico.</div>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid #E5E0F0;">
+              <div class="result-item-label">Indicador de progresso</div>
+              <div class="result-item-value">Pelo menos 1 tarefa que era só sua agora sendo feita por outra pessoa ou processo.</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="background:var(--gold);color:#2A1800;border-radius:10px 10px 0 0;padding:10px 16px;font-weight:700;font-size:13px;">📅 MÊS 3 — Consolidar e Crescer</div>
+          <div class="result-item full" style="border-radius:0 0 10px 10px;margin-top:0;">
+            <div class="result-item-label">Foco do mês</div>
+            <div class="result-item-value">Revisar o que funcionou. Consolidar os processos criados. Aumentar volume de vendas. Avaliar se a meta do período foi atingida e definir os próximos 3 meses.</div>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid #E5E0F0;">
+              <div class="result-item-label">Meta financeira</div>
+              <div class="result-item-value" style="color:var(--purple);font-weight:600;">${d.meta_m3}</div>
+            </div>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid #E5E0F0;">
+              <div class="result-item-label">Entregável esperado</div>
+              <div class="result-item-value">${d.independencia} funcionando sem depender de você.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-section">
+        <div class="result-section-title"><div class="result-section-num">4</div>Seu Compromisso</div>
+        <div class="result-grid">
+          <div class="result-item full highlight"><div class="result-item-label">O que você se comprometeu a mudar</div><div class="result-item-value">${d.visao}</div></div>
+        </div>
+        <div class="result-note">
+          ✦ <strong>${nome1}, este é o seu plano de primeira direção.</strong> Três meses. Um resultado claro. Um compromisso real. As estratégias e o passo a passo detalhado fazem parte da mentoria Empresárias no Comando — é lá que transformamos esse mapa em movimento.
+        </div>
+      </div>
+
+      <div class="result-section">
+        <div class="result-section-title"><div class="result-section-num">5</div>O Caminho — Método 3L</div>
+        <div class="result-3l">
+          <div class="result-l">
+            <div class="result-l-icon">💰</div>
+            <div class="result-l-name">Lucro</div>
+            <div class="result-l-desc">Organizar o financeiro e criar previsibilidade de receita nos 3 meses</div>
+          </div>
+          <div class="result-l">
+            <div class="result-l-icon">👑</div>
+            <div class="result-l-name">Liderança</div>
+            <div class="result-l-desc">Tomar decisões com clareza e parar de resolver o que não é seu</div>
+          </div>
+          <div class="result-l">
+            <div class="result-l-icon">🕊</div>
+            <div class="result-l-name">Liberdade</div>
+            <div class="result-l-desc">Criar os primeiros processos que reduzem a dependência de você</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="result-footer">
+      <div class="result-footer-brand">CresciMente Negócios · Rafaela Alves</div>
+      <div class="result-footer-method">Método 3L · Lucro · Liderança · Liberdade</div>
+    </div>
+  `;
+
+  document.getElementById('result-overlay').classList.add('show');
+  document.getElementById('result-overlay').scrollTop = 0;
+}
+
+// Set today's date as default
+document.getElementById('data_sessao').valueAsDate = new Date();
+</script>
+</body>
+</html>
